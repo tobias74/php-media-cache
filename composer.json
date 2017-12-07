@@ -1,0 +1,7 @@
+{
+    "name": "tobias74/php-media-cache",
+    "description": "image and video cache",
+    "type": "library",
+    "license": "MIT",
+    "require": {}
+}
