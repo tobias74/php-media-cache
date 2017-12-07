@@ -1,5 +1,5 @@
 <?php
-namespace Zeitfaden\CachedMediaService;
+namespace PhpMediaCache;
 
 
 class CachedMediaDatabase
@@ -46,7 +46,7 @@ class CachedMediaDatabase
 
     protected function produceCachedMedia()
     {
-        return new \Zeitfaden\CachedMediaService\CachedMedia();
+        return new CachedMedia();
     }
     
     protected function instantiateCachedMedia($document)
@@ -87,7 +87,7 @@ class CachedMediaDatabase
         $document = $collection->findOne(array('entity_id' => $entityId, 'serialized_specification' => $serializedSpec));
         if (!$document)
         {
-            throw new \Zeitfaden\Exception\NoMatchException();
+            throw new \Exception();
         }
         return $this->instantiateCachedMedia($document);
     }
@@ -99,7 +99,7 @@ class CachedMediaDatabase
         $document = $collection->findOne(array('path_to_file' => $pathToFile));
         if (!$document)
         {
-            throw new \Zeitfaden\Exception\NoMatchException();
+            throw new \Exception();
         }
         return $this->instantiateCachedMedia($document);
     }
@@ -111,7 +111,7 @@ class CachedMediaDatabase
         $document = $collection->findOne(array('entity_id' => $entityId));
         if (!$document)
         {
-            throw new \Zeitfaden\Exception\NoMatchException();
+            throw new \Exception();
         }
         return $this->instantiateCachedMedia($document);
     }

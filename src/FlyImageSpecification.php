@@ -1,5 +1,5 @@
 <?php 
-namespace Zeitfaden\CachedMediaService;
+namespace PhpMediaCache;
 
 
 class FlyImageSpecification

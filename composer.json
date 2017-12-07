@@ -3,5 +3,10 @@
     "description": "image and video cache",
     "type": "library",
     "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "PhpMediaCache\\": "src/"
+        }
+    },
     "require": {}
 }

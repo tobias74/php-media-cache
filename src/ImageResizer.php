@@ -1,6 +1,6 @@
 <?php 
 
-namespace Zeitfaden\CachedMediaService;
+namespace PhpMediaCache;
 
 
 class ImageResizer
