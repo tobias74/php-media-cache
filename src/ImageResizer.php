@@ -21,7 +21,7 @@ class ImageResizer
       }
       catch (\Exception $ee)
       {
-        error_log('we did get an exception regarding the exif.');
+        error_log('we did get an exception regarding the exif: '.$ee->getMessage());
       }
 
     }

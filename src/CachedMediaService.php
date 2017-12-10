@@ -59,11 +59,9 @@ class CachedMediaService
     }
     catch (\Exception $e)
     {
-      error_log('did not get any image... now making it.');
-  
       $imageResizer = new ImageResizer();
       $cachedImageTempName = $imageResizer->createCachedImage($imageFile, $entityId, $flySpec);
-      
+
       $relativeFilePath = $this->getCacheFileService()->storeFileByPath($cachedImageTempName);
 
       $cachedImage = new CachedMedia();
@@ -76,6 +74,7 @@ class CachedMediaService
       $this->getCachedMediaDatabase()->updateCachedMedia($cachedImage);
 
       $absoluteFilePath = $this->getCacheFileService()->getAbsoluteFilePath($relativeFilePath);
+      
     }
 
     return $absoluteFilePath;
