@@ -70,7 +70,17 @@ class VideoTranscoder
     $callback = function($msg){
       echo "now transcoding... [x] Received ", $msg->body, "\n";
       $data = json_decode($msg->body);
-      $this->performTranscoding($data->entityId, $data->serializedSpec, $data->absolutePath);
+      
+      try
+      {
+        $this->performTranscoding($data->entityId, $data->serializedSpec, $data->absolutePath);
+      }
+      catch (\Exception $e)
+      {
+        error_log('we did have a mishap transocding.. maybe the file was deleted?');
+        error_log(print_r($e, true));
+      }
+      
       echo "done transcoding.";
 
       $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
