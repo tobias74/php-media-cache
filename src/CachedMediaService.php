@@ -56,6 +56,9 @@ class CachedMediaService
     {
       $cachedImageDocument = $this->getCachedMediaDatabase()->getCachedMediaByIdAndSpec($entityId, $flySpec->serialize());
       $absoluteFilePath = $this->getCacheFileService()->getAbsoluteFilePath($cachedImageDocument->getPathToFile());
+      if (!file_exists($absoluteFilePath)){
+        throw new \Exception('File was deleted, resolve inconsitancy');
+      }
     }
     catch (\Exception $e)
     {
@@ -70,11 +73,9 @@ class CachedMediaService
       $cachedImage->setSerializedSpecification($flySpec->serialize());
       $cachedImage->setEntityId($entityId);
       $cachedImage->setPathToFile($relativeFilePath);
-      
       $this->getCachedMediaDatabase()->updateCachedMedia($cachedImage);
 
       $absoluteFilePath = $this->getCacheFileService()->getAbsoluteFilePath($relativeFilePath);
-      
     }
 
     return $absoluteFilePath;
