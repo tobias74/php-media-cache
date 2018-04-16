@@ -29,58 +29,53 @@ class CachedMediaService
       return $this->cachedMediaDatabase;
   }
 
+
+
+  public function setCacheFileService($val)
+  {
+    $this->cacheFileService = $val;
+  }
+
   public function getCacheFileService()
   {
-      if (!$this->cacheFileService)
-      {
-        $this->cacheFileService = new \PhpFileService\FileService();
-      }
-      return $this->cacheFileService;
+    return $this->cacheFileService;
   }
 
-  
-  public function setStoragePath($path)
+
+  public function getPresignedUrlForMedia($cachedMedia, $expiresIn='+10 minutes')
   {
-    $this->getCacheFileService()->setStoragePath($path);
-  }
-
-  public function setShardPath($path)
-  {
-    $this->getCacheFileService()->setShardPath($path);
+    return $this->getCacheFileService()->getPresignedUrl($cachedMedia->getId(), $expiresIn);
   }
 
 
-  public function getCachedImage($imageFile, $entityId, $flySpec)
+  public function getCachedImage($imageUri, $entityId, $flySpec)
   {
     try 
     {
-      $cachedImageDocument = $this->getCachedMediaDatabase()->getCachedMediaByIdAndSpec($entityId, $flySpec->serialize());
-      $absoluteFilePath = $this->getCacheFileService()->getAbsoluteFilePath($cachedImageDocument->getPathToFile());
-      if (!file_exists($absoluteFilePath)){
-        throw new \Exception('File was deleted, resolve inconsitancy');
-      }
+      $cachedImage = $this->getCachedMediaDatabase()->getCachedMediaByIdAndSpec($entityId, $flySpec->serialize());
     }
     catch (\Exception $e)
     {
-      $imageResizer = new ImageResizer();
-      $cachedImageTempName = $imageResizer->createCachedImage($imageFile, $entityId, $flySpec);
-
-      $relativeFilePath = $this->getCacheFileService()->storeFileByPath($cachedImageTempName);
-
       $cachedImage = new CachedMedia();
       $cachedImage->setFileType('image/png');
+      $cachedImage->setStatus('in_progress');
+      $this->getCachedMediaDatabase()->updateCachedMedia($cachedImage);
+
+      $imageResizer = new ImageResizer();
+      $cachedImageTempName = $imageResizer->createCachedImage($imageUri, $flySpec);
+      $relativeFilePath = $this->getCacheFileService()->storeFile($cachedImageTempName, $cachedImage->getId());
+
       $cachedImage->setStatus('complete');
       $cachedImage->setSerializedSpecification($flySpec->serialize());
       $cachedImage->setEntityId($entityId);
-      $cachedImage->setPathToFile($relativeFilePath);
       $this->getCachedMediaDatabase()->updateCachedMedia($cachedImage);
 
-      $absoluteFilePath = $this->getCacheFileService()->getAbsoluteFilePath($relativeFilePath);
     }
 
-    return $absoluteFilePath;
-
+    return $cachedImage;
   }
+
+
 
 
   public function getCachedVideo($videoFile, $entityId, $flySpec)
@@ -88,15 +83,7 @@ class CachedMediaService
     try 
     {
       $cachedVideoDocument = $this->getCachedMediaDatabase()->getCachedMediaByIdAndSpec($entityId, $flySpec->serialize());
-      if ($cachedVideoDocument->isScheduled())
-      {
-        $absoluteFilePath = "video_scheduled_but_not_ready_yet";
-      }
-      else 
-      {
-        $absoluteFilePath = $this->getCacheFileService()->getAbsoluteFilePath($cachedVideoDocument->getPathToFile());
-      }
-      
+      return $cachedVideoDocument;
     }
     catch (\Exception $e)
     {
@@ -111,10 +98,8 @@ class CachedMediaService
       $videoTranscoder = new VideoTranscoder($this);
       $cachedVideoTempName = $videoTranscoder->scheduleVideoTranscoding($videoFile, $entityId, $flySpec);
       
-      $absoluteFilePath = "video_was_just_scheduled";
+      return $cachedVideo;
     }
-
-    return $absoluteFilePath;
 
   }
 

@@ -58,7 +58,7 @@ class CachedMediaDatabase
         $cachedMedia->setEntityId( $resultHash['entity_id'] );
         $cachedMedia->setStatus( $resultHash['status'] );
         $cachedMedia->setFileType( $resultHash['file_type'] );
-        $cachedMedia->setPathToFile( $resultHash['path_to_file'] );
+        $cachedMedia->setId( $resultHash['id'] );
 
         return $cachedMedia;
     }
@@ -66,17 +66,22 @@ class CachedMediaDatabase
  
     public function updateCachedMedia($cachedMedia)
     {
+        if ($cachedMedia->getId() == false)
+        {
+          $cachedMedia->setId("fly".$this->getUniqueId());
+        }
+    
         $document = array(
           'entity_id' => $cachedMedia->getEntityId(),
           'serialized_specification' => $cachedMedia->getSerializedSpecification(),
           'status' => $cachedMedia->getStatus(),
           'file_type' => $cachedMedia->getFileType(),
-          'path_to_file' => $cachedMedia->getPathToFile()
+          'id' => $cachedMedia->getId()
         );
         $dbName = $this->getMongoDbName();
         $collection = $this->getConnection()->$dbName->cached_media;
         
-        $collection->updateOne(array('entity_id'=>$cachedMedia->getEntityId(), 'serialized_specification'=>$cachedMedia->getSerializedSpecification()), array('$set'=>$document), array("upsert" => true));        
+        $collection->updateOne(array('id'=>$cachedMedia->getId()), array('$set'=>$document), array("upsert" => true));        
     }
  
  

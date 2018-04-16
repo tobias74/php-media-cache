@@ -8,7 +8,7 @@ class CachedMedia
   protected $serializedSpecification="";
   protected $status="";
   protected $entityId="";
-  protected $pathToFile="";
+  protected $id=false;
 
 
   public function isRunning()
@@ -71,15 +71,16 @@ class CachedMedia
   }
 
 
-  public function setPathToFile($val)
+  public function setId($val)
   {
-    $this->pathToFile = $val;
+    $this->id = $val;
   }
 
-  public function getPathToFile()
+  public function getId()
   {
-    return $this->pathToFile;
+    return $this->id;
   }
+
 
 
 }

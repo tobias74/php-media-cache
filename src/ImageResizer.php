@@ -5,7 +5,7 @@ namespace PhpMediaCache;
 
 class ImageResizer
 {
-  public function createCachedImage($imageFileName, $targetFileName, $flySpec)
+  public function createCachedImage($imageFileName, $flySpec)
   {
     try
     {
