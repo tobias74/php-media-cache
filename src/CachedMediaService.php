@@ -103,6 +103,11 @@ class CachedMediaService
 
   }
 
+  
+  public function getMediaById($mediaId)
+  {
+    $this->getCachedMediaDatabase()->getById($mediaId);
+  }
 
   public function deleteCachedMedias($entityId)
   {

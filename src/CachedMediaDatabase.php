@@ -49,6 +49,14 @@ class CachedMediaDatabase
         return new CachedMedia();
     }
     
+    protected function getMediaCollection()
+    {
+        $dbName = $this->getMongoDbName();
+        $collection = $this->getConnection()->$dbName->cached_media;
+        return $collection;        
+    }
+    
+    
     protected function instantiateCachedMedia($document)
     {
         $resultHash = json_decode(\MongoDB\BSON\toJSON(\MongoDB\BSON\fromPHP($document)),true);
@@ -63,6 +71,15 @@ class CachedMediaDatabase
         return $cachedMedia;
     }
     
+    public function getById($mediaId)
+    {
+        $document = $this->getMediaCollection()->findOne(array('id' => $mediaId));
+        if (!$document)
+        {
+            throw new \Exception();
+        }
+        return $this->instantiateCachedMedia($document);
+    }
  
     public function updateCachedMedia($cachedMedia)
     {
@@ -78,18 +95,14 @@ class CachedMediaDatabase
           'file_type' => $cachedMedia->getFileType(),
           'id' => $cachedMedia->getId()
         );
-        $dbName = $this->getMongoDbName();
-        $collection = $this->getConnection()->$dbName->cached_media;
-        
-        $collection->updateOne(array('id'=>$cachedMedia->getId()), array('$set'=>$document), array("upsert" => true));        
+
+        $this->getMediaCollection()->updateOne(array('id'=>$cachedMedia->getId()), array('$set'=>$document), array("upsert" => true));        
     }
  
  
     public function getCachedMediaByIdAndSpec($entityId, $serializedSpec)
     {
-        $dbName = $this->getMongoDbName();
-        $collection = $this->getConnection()->$dbName->cached_media;
-        $document = $collection->findOne(array('entity_id' => $entityId, 'serialized_specification' => $serializedSpec));
+        $document = $this->getMediaCollection()->findOne(array('entity_id' => $entityId, 'serialized_specification' => $serializedSpec));
         if (!$document)
         {
             throw new \Exception();
@@ -99,9 +112,7 @@ class CachedMediaDatabase
 
     public function getCachedMediaByPathToFile($pathToFile)
     {
-        $dbName = $this->getMongoDbName();
-        $collection = $this->getConnection()->$dbName->cached_media;
-        $document = $collection->findOne(array('path_to_file' => $pathToFile));
+        $document = $this->getMediaCollection()->findOne(array('path_to_file' => $pathToFile));
         if (!$document)
         {
             throw new \Exception();
@@ -111,9 +122,7 @@ class CachedMediaDatabase
 
     public function getCachedMediaByEntityId($entityId)
     {
-        $dbName = $this->getMongoDbName();
-        $collection = $this->getConnection()->$dbName->cached_media;
-        $document = $collection->findOne(array('entity_id' => $entityId));
+        $document = $this->getMediaCollection()->findOne(array('entity_id' => $entityId));
         if (!$document)
         {
             throw new \Exception();
@@ -124,9 +133,7 @@ class CachedMediaDatabase
 
     public function deleteCachedMedia($cachedMedia)
     {
-        $dbName = $this->getMongoDbName();
-        $collection = $this->getConnection()->$dbName->cached_media;
-        $collection->deleteOne(array('entity_id'=>$cachedMedia->getEntityId(), 'serialized_specification'=>$cachedMedia->getSerializedSpecification()));        
+        $this->getMediaCollection()->deleteOne(array('entity_id'=>$cachedMedia->getEntityId(), 'serialized_specification'=>$cachedMedia->getSerializedSpecification()));        
     }
    
 }
