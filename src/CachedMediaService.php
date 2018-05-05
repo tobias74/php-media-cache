@@ -110,7 +110,7 @@ class CachedMediaService
 
     foreach ($cachedMedias as $cachedMedia)
     {
-      $this->getCacheFileService()->deleteFile($cachedMedia->getPathToFile());
+      $this->getCacheFileService()->deleteFile($cachedMedia->getId());
       $this->getCachedMediaDatabase()->deleteCachedMedia($cachedMedia);
     }
 
