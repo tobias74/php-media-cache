@@ -42,9 +42,9 @@ class CachedMediaService
   }
 
 
-  public function getPresignedUrlForMedia($cachedMedia, $expiresIn='+10 minutes')
+  public function getExternalUriForMedia($cachedMedia)
   {
-    return $this->getCacheFileService()->getPresignedUrl($cachedMedia->getId(), $expiresIn);
+    return $this->getCacheFileService()->getExternalUri($cachedMedia->getId());
   }
 
 
