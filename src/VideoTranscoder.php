@@ -122,16 +122,12 @@ class VideoTranscoder
       $this->getCachedMediaService()->getCachedMediaDatabase()->updateCachedMedia($cachedMedia);
     }
 
-
-
-
     $originalFile = $absolutePath;
 
-    $targetVideoFile = tempnam('/tmp','flyfiles');
     $flySpecHash = unserialize($cachedMedia->getSerializedSpecification());
 
-//  $uniqueFileNameMp4 = $uniqueFileName.'.mp4';
-    $targetVideoFile = $targetVideoFile.'.'.$flySpecHash['format'];
+    $targetVideoFileWithoutExtension = tempnam('/tmp','flyfiles');
+    $targetVideoFile = $targetVideoFileWithoutExtension.'.'.$flySpecHash['format'];
 
     $command = dirname(__FILE__)."/scripts/convert_".$flySpecHash['format']." \"$originalFile\" $targetVideoFile";
 
@@ -154,6 +150,7 @@ class VideoTranscoder
     $this->getCachedMediaService()->getCachedMediaDatabase()->updateCachedMedia($cachedMedia);
 
     unlink($targetVideoFile);
+    unlink($targetVideoFileWithoutExtension);
 
   }
 

@@ -64,7 +64,8 @@ class CachedMediaService
       $imageResizer = new ImageResizer();
       $cachedImageTempName = $imageResizer->createCachedImage($imageUri, $flySpec);
       $relativeFilePath = $this->getCacheFileService()->storeFile($cachedImageTempName, $cachedImage->getId());
-
+      unlink($cachedImageTempName);
+      
       $cachedImage->setStatus('complete');
       $cachedImage->setSerializedSpecification($flySpec->serialize());
       $cachedImage->setEntityId($entityId);
