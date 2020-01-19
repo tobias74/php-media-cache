@@ -14,6 +14,16 @@ class S3MediaServer
         $this->getMediaCacheService()->listenForTranscodingJobs();
     }
 
+    public function getPdfImageData($id, $spec)
+    {
+        $pdfUri = $this->getS3ServiceForOriginalFiles()->getExternalUri($id);
+        $cachedImage = $this->getMediaCacheService()->getCachedPdfImage($pdfUri, $id, $spec);
+
+        return array(
+          'fileNameInBucket' => $cachedImage->getId(),
+        );
+    }
+
     public function getImageData($id, $spec)
     {
         $imageUri = $this->getS3ServiceForOriginalFiles()->getExternalUri($id);

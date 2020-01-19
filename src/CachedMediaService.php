@@ -43,6 +43,30 @@ class CachedMediaService
         return $this->getCacheFileService()->getExternalUri($cachedMedia->getId());
     }
 
+    public function getCachedPdfImage($pdfUri, $entityId, $flySpec)
+    {
+        try {
+            $cachedImage = $this->getCachedMediaDatabase()->getCachedMediaByIdAndSpec($entityId, $flySpec->serialize());
+        } catch (\Exception $e) {
+            $cachedImage = new CachedMedia();
+            $cachedImage->setFileType('image/png');
+            $cachedImage->setStatus('in_progress');
+            $this->getCachedMediaDatabase()->updateCachedMedia($cachedImage);
+
+            $imageResizer = new PdfToImageConverter();
+            $cachedImageTempName = $imageResizer->createCachedImage($pdfUri, $flySpec);
+            $relativeFilePath = $this->getCacheFileService()->storeFile($cachedImageTempName, $cachedImage->getId());
+            unlink($cachedImageTempName);
+
+            $cachedImage->setStatus('complete');
+            $cachedImage->setSerializedSpecification($flySpec->serialize());
+            $cachedImage->setEntityId($entityId);
+            $this->getCachedMediaDatabase()->updateCachedMedia($cachedImage);
+        }
+
+        return $cachedImage;
+    }
+
     public function getCachedImage($imageUri, $entityId, $flySpec)
     {
         try {
