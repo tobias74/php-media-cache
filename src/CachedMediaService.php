@@ -7,6 +7,42 @@ class CachedMediaService
     protected $cachedMediaDatabase;
     protected $cacheFileService;
 
+    ////////////////START: this is the old method.... we need to do this
+    protected function getSimpleFileType($fileType)
+    {
+        if ('image' == substr($fileType, 0, 5)) {
+            return 'image';
+        } elseif ('video' == substr($fileType, 0, 5)) {
+            return 'video';
+        } elseif ('application/pdf' === $fileType) {
+            return 'pdf';
+        } else {
+            return 'unknown';
+        }
+    }
+
+    public function scheduleTranscoding($mediaFilePath, $cachedMedia)
+    {
+        $fileTpye = $cachedMedia->getOriginalFileType();
+        switch ($this->getSimpleFileType($fileType)) {
+            case 'image':
+                $this->scheduleImageTranscoding($mediaFilePath, $cachedMedia->getEntityId(), $cachedMedia->getSerializedSpecification());
+                break;
+            case 'video':
+                $this->scheduleVideoTranscoding($mediaFilePath, $cachedMedia->getEntityId(), $cachedMedia->getSerializedSpecification());
+                break;
+
+            case 'pdf':
+
+                break;
+
+            default:
+                throw new \Exception('unknown media type in schedule Trnscoding');
+        }
+    }
+
+    ////////////END
+
     public function __construct($config)
     {
         $this->config = $config;
@@ -133,9 +169,59 @@ class CachedMediaService
         }
     }
 
-    public function listenForTranscodingJobs()
+    public function listenForImageTranscodingJobs()
     {
-        $videoTranscoder = new VideoTranscoder($this);
+        $videoTranscoder = new ImageMediaTranscoder($this);
         $videoTranscoder->listenForTranscodingJobs();
+    }
+
+    public function listenForVideoTranscodingJobs()
+    {
+        $videoTranscoder = new VideoMediaTranscoder($this);
+        $videoTranscoder->listenForTranscodingJobs();
+    }
+
+    // async images down here:
+
+    public function isTrancodedImageDone($imageFile, $entityId, $flySpec)
+    {
+        $cachedDocument = $this->getCachedMediaDatabase()->getCachedMediaByIdAndSpec($entityId, $flySpec->serialize());
+        if ($cachedDocument->isDone()) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public function getTranscodedMedia($externalId, $flySpec)
+    {
+        $cachedDocument = $this->getCachedMediaDatabase()->getCachedMediaByIdAndSpec($externalId, $flySpec->serialize());
+        if ($cachedDocument->isDone()) {
+            return $cachedDocument;
+        } else {
+            throw new \Exception('trancoded image not ready yet');
+        }
+    }
+
+    public function scheduleMediaTranscoding($mediaFile, $cachedMedia)
+    {
+        $cachedMedia->setStatus('scheduled');
+        $this->getCachedMediaDatabase()->updateCachedMedia($cachedMedia);
+
+        $transcoder = new MediaTranscoder($this);
+        $cachedTempName = $transcoder->scheduleTranscoding($mediaFile, $cachedMedia);
+
+        return $cachedMedia;
+    }
+
+    public function createCachedMedia($entityId, $flySpec)
+    {
+        $cachedMedia = new CachedMedia();
+        $cachedMedia->setStatus('initialized');
+        $cachedMedia->setSerializedSpecification($flySpec->serialize());
+        $cachedMedia->setEntityId($entityId);
+        $this->getCachedMediaDatabase()->updateCachedMedia($cachedMedia);
+
+        return $cachedMedia;
     }
 }
