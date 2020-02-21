@@ -107,6 +107,18 @@ class MediaTranscodingQueue
         $transcoder = $this->strategy->createTranscoder();
 
         $cachedImageTempName = $transcoder->transcode($absolutePath, $flySpec);
+        
+
+        // is this used or read anywhere?
+        /*
+        if ('jpg' === $flySpec['format']) {
+            $cachedMedia->setFileType('image/'.$flySpec['format']);
+        } else {
+            $cachedMedia->setFileType('video/'.$flySpec['format']);
+        }
+        */
+        
+        
 
         $this->getCachedMediaService()->getCacheFileService()->storeFile($cachedImageTempName, $cachedMedia->getId());
         $cachedMedia->setStatus('complete');
