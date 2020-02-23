@@ -4,8 +4,7 @@ namespace PhpMediaCache;
 
 class CachedMedia
 {
-    protected $originalFileType = '';
-    protected $fileType = '';
+    protected $type = '';
     protected $serializedSpecification = '';
     protected $status = '';
     protected $entityId = '';
@@ -46,24 +45,14 @@ class CachedMedia
         return $this->status;
     }
 
-    public function setFileType($val)
+    public function setType($val)
     {
-        $this->fileType = $val;
+        $this->type = $val;
     }
 
-    public function getOriginalFileType()
+    public function getType()
     {
-        return $this->originalFileType;
-    }
-
-    public function setOriginalFileType($val)
-    {
-        $this->originalFileType = $val;
-    }
-
-    public function getFileType()
-    {
-        return $this->fileType;
+        return $this->type;
     }
 
     public function setEntityId($val)

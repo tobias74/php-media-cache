@@ -2,12 +2,8 @@
 
 namespace PhpMediaCache\Strategies;
 
-class ImageStrategy
+class ImageStrategy extends AbstractStrategy
 {
-    public function __construct()
-    {
-    }
-
     public function getQueueName()
     {
         return 'transcoding_images_task_queue_'.$this->getConfig()['rabbitQueueName'];

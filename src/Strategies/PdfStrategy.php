@@ -2,12 +2,8 @@
 
 namespace PhpMediaCache\Strategies;
 
-class PdfStrategy
+class PdfStrategy extends AbstractStrategy
 {
-    public function __construct()
-    {
-    }
-
     public function getQueueName()
     {
         return 'transcoding_pdfs_task_queue_'.$this->getConfig()['rabbitQueueName'];

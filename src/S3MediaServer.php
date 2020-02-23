@@ -9,35 +9,23 @@ class S3MediaServer
         $this->configureDependencies($config);
     }
 
-    public function listenForTranscodingJobs()
+    public function listenForImageTranscodingJobs()
     {
-        $this->getMediaCacheService()->listenForTranscodingJobs();
+        $this->getMediaCacheService()->listenForImageTranscodingJobs();
     }
 
-    public function getPdfImageData($id, $spec)
+    public function listenForVideoTranscodingJobs()
     {
-        $pdfUri = $this->getS3ServiceForOriginalFiles()->getExternalUri($id);
-        $cachedImage = $this->getMediaCacheService()->getCachedPdfImage($pdfUri, $id, $spec);
-
-        return array(
-          'fileNameInBucket' => $cachedImage->getId(),
-        );
+        $this->getMediaCacheService()->listenForVideoTranscodingJobs();
     }
 
-    public function getImageData($id, $spec)
+    public function listenForPdfTranscodingJobs()
     {
-        $imageUri = $this->getS3ServiceForOriginalFiles()->getExternalUri($id);
-        $cachedImage = $this->getMediaCacheService()->getCachedImage($imageUri, $id, $spec);
-
-        return array(
-          'fileNameInBucket' => $cachedImage->getId(),
-        );
+        $this->getMediaCacheService()->listenForPdfTranscodingJobs();
     }
 
-    public function getVideoData($id, $flySpec)
+    protected function mapCachedMedia($cachedMedia)
     {
-        $videoUrl = $this->getS3ServiceForOriginalFiles()->getExternalUri($id);
-        $cachedVideo = $this->getMediaCacheService()->getCachedVideo($videoUrl, $id, $flySpec);
         if ($cachedVideo->isScheduled()) {
             return array(
              'status' => 'scheduled',
@@ -50,23 +38,40 @@ class S3MediaServer
         }
     }
 
+    public function transcodePdfData($id, $spec)
+    {
+        $pdfUri = $this->getS3ServiceForOriginalFiles()->getExternalUri($id);
+        $cachedImage = $this->getMediaCacheService()->transcodePdfUsingCache($pdfUri, $id, $spec);
+
+        return $this->mapCachedMedia($cachedImage);
+    }
+
+    public function transcodeImageData($id, $spec)
+    {
+        $imageUri = $this->getS3ServiceForOriginalFiles()->getExternalUri($id);
+        $cachedImage = $this->getMediaCacheService()->transcodeImageUsingCache($imageUri, $id, $spec);
+
+        return $this->mapCachedMedia($cachedImage);
+    }
+
+    public function transcodeVideoData($id, $flySpec)
+    {
+        $videoUrl = $this->getS3ServiceForOriginalFiles()->getExternalUri($id);
+        $cachedVideo = $this->getMediaCacheService()->transcodeVideoUsingCache($videoUrl, $id, $flySpec);
+
+        return $this->mapCachedMedia($cachedVideo);
+    }
+
+    public function getCachedMediaData($id, $spec)
+    {
+        $cachedImage = $this->getMediaCacheService()->getCachedMedia($id, $spec);
+
+        return $this->mapCachedMedia($cachedImage);
+    }
+
     public function deleteMedia($id)
     {
         $this->getMediaCacheService()->deleteCachedMedias($id);
-    }
-
-    public function getImageSpec()
-    {
-        $flySpec = new \PhpMediaCache\FlyImageSpecification();
-
-        return $flySpec;
-    }
-
-    public function getVideoSpec()
-    {
-        $flySpec = new \PhpMediaCache\FlyVideoSpecification();
-
-        return $flySpec;
     }
 
     protected function configureDependencies($config)

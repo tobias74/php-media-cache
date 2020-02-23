@@ -2,12 +2,8 @@
 
 namespace PhpMediaCache\Strategies;
 
-class VideoStrategy
+class VideoStrategy extends AbstractStrategy
 {
-    public function __construct()
-    {
-    }
-
     public function getQueueName()
     {
         return 'transcoding_videos_queue_'.$this->getConfig()['rabbitQueueName'];

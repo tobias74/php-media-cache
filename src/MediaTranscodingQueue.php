@@ -80,7 +80,7 @@ class MediaTranscodingQueue
         $connection->close();
     }
 
-    protected function listenForTranscodingJobs()
+    public function listenForTranscodingJobs()
     {
         $this->listenOnQueue($this->getQueueName(), function ($msg) {
             echo 'now transcoding... [x] Received ', $msg->body, "\n";
@@ -103,8 +103,7 @@ class MediaTranscodingQueue
 
         $this->getCachedMediaService()->advanceToCurrentlyTranscoding($entityId, $flySpec);
 
-        $transcoder = $this->strategy->createTranscoder();
-        $this->getCachedMediaService()->storeTranscodedFile($entityId, $flySpec, $transcoder->transcode($absolutePath, $flySpec));
+        $this->getCachedMediaService()->storeTranscodedFile($entityId, $flySpec, $this->strategy->transcode($absolutePath, $flySpec));
 
         $this->getCachedMediaService()->advanceToDone($entityId, $flySpec);
         $transcoder->cleanup();
