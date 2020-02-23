@@ -34,7 +34,7 @@ class MediaTranscodingQueue
         $channel->queue_declare($channelName, false, true, false, false);
 
         error_log('This is what we have as $dataArray: ');
-        error_log(print_r($dataArray, true));
+        error_log(print_r($messageData, true));
 
         // make message persistent
         $msg = new AMQPMessage(json_encode($messageData), array('delivery_mode' => 2));
@@ -67,7 +67,7 @@ class MediaTranscodingQueue
         echo ' [*] Waiting for messages on '.$queueName.'. To exit press CTRL+C', "\n";
 
         $channel->basic_qos(null, 1, null);
-        $channel->basic_consume($queueName, '', false, false, false, false, function ($msg) {
+        $channel->basic_consume($queueName, '', false, false, false, false, function ($msg) use ($callback) {
             $callback($msg);
             $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
         });

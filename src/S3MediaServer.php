@@ -26,19 +26,19 @@ class S3MediaServer
 
     protected function mapCachedMedia($cachedMedia)
     {
-        if ($cachedVideo->isScheduled()) {
+        if ($cachedMedia->isScheduled()) {
             return array(
              'status' => 'scheduled',
             );
         } else {
             return array(
             'status' => 'done',
-            'fileNameInBucket' => $cachedVideo->getId(),
+            'fileNameInBucket' => $cachedMedia->getId(),
           );
         }
     }
 
-    public function transcodePdfData($id, $spec)
+    public function transcodePdf($id, $spec)
     {
         $pdfUri = $this->getS3ServiceForOriginalFiles()->getExternalUri($id);
         $cachedImage = $this->getMediaCacheService()->transcodePdfUsingCache($pdfUri, $id, $spec);
@@ -46,7 +46,7 @@ class S3MediaServer
         return $this->mapCachedMedia($cachedImage);
     }
 
-    public function transcodeImageData($id, $spec)
+    public function transcodeImage($id, $spec)
     {
         $imageUri = $this->getS3ServiceForOriginalFiles()->getExternalUri($id);
         $cachedImage = $this->getMediaCacheService()->transcodeImageUsingCache($imageUri, $id, $spec);
@@ -54,7 +54,7 @@ class S3MediaServer
         return $this->mapCachedMedia($cachedImage);
     }
 
-    public function transcodeVideoData($id, $flySpec)
+    public function transcodeVideo($id, $flySpec)
     {
         $videoUrl = $this->getS3ServiceForOriginalFiles()->getExternalUri($id);
         $cachedVideo = $this->getMediaCacheService()->transcodeVideoUsingCache($videoUrl, $id, $flySpec);

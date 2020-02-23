@@ -4,7 +4,6 @@ namespace PhpMediaCache;
 
 class CachedMedia
 {
-    protected $type = '';
     protected $serializedSpecification = '';
     protected $status = '';
     protected $entityId = '';
@@ -43,16 +42,6 @@ class CachedMedia
     public function getStatus()
     {
         return $this->status;
-    }
-
-    public function setType($val)
-    {
-        $this->type = $val;
-    }
-
-    public function getType()
-    {
-        return $this->type;
     }
 
     public function setEntityId($val)

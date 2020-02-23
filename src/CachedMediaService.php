@@ -17,9 +17,9 @@ class CachedMediaService
         return $this->config;
     }
 
-    public function scheduleTranscoding($mediaFilePath, $cachedMedia)
+    public function scheduleTranscoding($mediaFilePath, $cachedMedia, $type)
     {
-        switch ($cachedMedia->getType()) {
+        switch ($type) {
             case 'image':
                 $strategy = new Strategies\ImageStrategy($this->getConfig());
                 break;
@@ -116,11 +116,11 @@ class CachedMediaService
         try {
             $cachedMedia = $this->getCachedMedia($data['entityId'], $data['flySpec']);
         } catch (\Exception $e) {
-            $cachedImage = $this->createCachedMedia($data['entityId'], $data['flySpec'], $data['type']);
-            $this->scheduleTranscoding($data['originalUri'], $cachedMedia);
+            $cachedMedia = $this->createCachedMedia($data['entityId'], $data['flySpec'], $data['type']);
+            $this->scheduleTranscoding($data['originalUri'], $cachedMedia, $data['type']);
         }
 
-        return $cachedImage;
+        return $cachedMedia;
     }
 
     public function getCachedMediaById($mediaId)
