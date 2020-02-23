@@ -13,9 +13,4 @@ class AbstractStrategy
     {
         return $this->config;
     }
-
-    public function transcode($absolutePath, $flySpec)
-    {
-        return $this->createTranscoder()->transcode($absolutePath, $flySpec);
-    }
 }

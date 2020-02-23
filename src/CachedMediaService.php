@@ -116,11 +116,19 @@ class CachedMediaService
         try {
             $cachedMedia = $this->getCachedMedia($data['entityId'], $data['flySpec']);
         } catch (\Exception $e) {
-            $cachedMedia = $this->createCachedMedia($data['entityId'], $data['flySpec'], $data['type']);
+            $cachedMedia = $this->createCachedMedia($data['entityId'], $data['flySpec']);
+        }
+
+        if ($this->needsScheduling($cachedMedia)) {
             $this->scheduleTranscoding($data['originalUri'], $cachedMedia, $data['type']);
         }
 
         return $cachedMedia;
+    }
+
+    protected function needsScheduling($cachedMedia)
+    {
+        return $cachedMedia->hasStalled() || $cachedMedia->isInitialized();
     }
 
     public function getCachedMediaById($mediaId)
@@ -158,13 +166,12 @@ class CachedMediaService
         return $this->getCachedMediaDatabase()->getCachedMediaByIdAndSpec($externalId, json_encode($flySpec));
     }
 
-    public function createCachedMedia($entityId, $flySpec, $type)
+    public function createCachedMedia($entityId, $flySpec)
     {
         $cachedMedia = new CachedMedia();
         $cachedMedia->setStatus('initialized');
         $cachedMedia->setSerializedSpecification(json_encode($flySpec));
         $cachedMedia->setEntityId($entityId);
-        $cachedMedia->setType($type);
         $this->getCachedMediaDatabase()->updateCachedMedia($cachedMedia);
 
         return $cachedMedia;
@@ -205,12 +212,8 @@ class CachedMediaService
 
     protected function advanceMediaToCurrentlyTranscoding($cachedMedia)
     {
-        if (!$cachedMedia->isScheduled()) {
-            throw new \Exception('we found a cache-item that was not scheduled but in the queue? '.$cachedMedia->getEntityId());
-        } else {
-            $cachedMedia->setStatus('currently_transcoding');
-            $this->getCachedMediaDatabase()->updateCachedMedia($cachedMedia);
-        }
+        $cachedMedia->setStatus('currently_transcoding');
+        $this->getCachedMediaDatabase()->updateCachedMedia($cachedMedia);
     }
 
     protected function advanceMediaToDone($cachedMedia)

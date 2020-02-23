@@ -64,6 +64,7 @@ class CachedMediaDatabase
         $cachedMedia->setEntityId($resultHash['entity_id']);
         $cachedMedia->setStatus($resultHash['status']);
         $cachedMedia->setId($resultHash['id']);
+        $cachedMedia->lastUpdated = $resultHash['last_updated'] ?? 0;
 
         return $cachedMedia;
     }
@@ -89,6 +90,7 @@ class CachedMediaDatabase
           'serialized_specification' => $cachedMedia->getSerializedSpecification(),
           'status' => $cachedMedia->getStatus(),
           'id' => $cachedMedia->getId(),
+          'last_updated' => time(),
         );
 
         $this->getMediaCollection()->updateOne(array('id' => $cachedMedia->getId()), array('$set' => $document), array('upsert' => true));
@@ -98,7 +100,7 @@ class CachedMediaDatabase
     {
         $document = $this->getMediaCollection()->findOne(array('entity_id' => $entityId, 'serialized_specification' => $serializedSpec));
         if (!$document) {
-            throw new \Exception();
+            throw new \Exception('cached media not found for entity_id' + $entityId);
         }
 
         return $this->instantiateCachedMedia($document);

@@ -9,6 +9,11 @@ class CachedMedia
     protected $entityId = '';
     protected $id = false;
 
+    public function isInitialized()
+    {
+        return 'initialized' === $this->status;
+    }
+
     public function isRunning()
     {
         return 'running' === $this->status;
@@ -22,6 +27,19 @@ class CachedMedia
     public function isDone()
     {
         return 'complete' === $this->status;
+    }
+
+    public function hasStalled()
+    {
+        if ($this->isScheduled() || $this->isRunning()) {
+            if (time() - $this->lastUpdated > 3600 * 1) {
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
     }
 
     public function setSerializedSpecification($val)
