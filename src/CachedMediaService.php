@@ -7,7 +7,16 @@ class CachedMediaService
     protected $cachedMediaDatabase;
     protected $cacheFileService;
 
-    ////////////////START: this is the old method.... we need to do this
+    public function __construct($config)
+    {
+        $this->config = $config;
+    }
+
+    public function getConfig()
+    {
+        return $this->config;
+    }
+
     protected function getSimpleFileType($fileType)
     {
         if ('image' == substr($fileType, 0, 5)) {
@@ -26,42 +35,38 @@ class CachedMediaService
         $fileTpye = $cachedMedia->getOriginalFileType();
         switch ($this->getSimpleFileType($fileType)) {
             case 'image':
-                $this->scheduleImageTranscoding($mediaFilePath, $cachedMedia->getEntityId(), $cachedMedia->getSerializedSpecification());
+                $strategy = new Strategies\ImageStrategy();
                 break;
             case 'video':
-                $this->scheduleVideoTranscoding($mediaFilePath, $cachedMedia->getEntityId(), $cachedMedia->getSerializedSpecification());
+                $strategy = new Strategies\VideoStrategy();
                 break;
-
             case 'pdf':
-
+                $strategy = new Strategies\PdfStrategy();
                 break;
-
             default:
                 throw new \Exception('unknown media type in schedule Trnscoding');
         }
+
+        $transcodingQueue = new MediaTranscodeingQueue($this, $strategy);
+        $transcodingQueue->scheduleTranscoding($mediaFilePath, $cachedMedia->getEntityId(), $cachedMedia->getSerializedSpecification());
     }
 
-    ////////////END
-
-    public function __construct($config)
+    public function listenForImageTranscodingJobs()
     {
-        $this->config = $config;
+        $transcodingQueue = new MediaTranscodeingQueue($this, new Strategies\ImageStrategy());
+        $transcodingQueue->listenForTranscodingJobs();
     }
 
-    public function getConfig()
+    public function listenForVideoTranscodingJobs()
     {
-        return $this->config;
+        $transcodingQueue = new MediaTranscodeingQueue($this, new Strategies\VideoStrategy());
+        $transcodingQueue->listenForTranscodingJobs();
     }
 
-    public function getCachedMediaDatabase()
+    public function listenForPdfTranscodingJobs()
     {
-        if (!$this->cachedMediaDatabase) {
-            $this->cachedMediaDatabase = new CachedMediaDatabase();
-            $this->cachedMediaDatabase->setMongoDbHost($this->config['mongoDbHost']);
-            $this->cachedMediaDatabase->setMongoDbName($this->config['mongoDbName']);
-        }
-
-        return $this->cachedMediaDatabase;
+        $transcodingQueue = new MediaTranscodeingQueue($this, new Strategies\PdfStrategy());
+        $transcodingQueue->listenForTranscodingJobs();
     }
 
     public function setCacheFileService($val)
@@ -77,6 +82,17 @@ class CachedMediaService
     public function getExternalUriForMedia($cachedMedia)
     {
         return $this->getCacheFileService()->getExternalUri($cachedMedia->getId());
+    }
+
+    public function getCachedMediaDatabase()
+    {
+        if (!$this->cachedMediaDatabase) {
+            $this->cachedMediaDatabase = new CachedMediaDatabase();
+            $this->cachedMediaDatabase->setMongoDbHost($this->config['mongoDbHost']);
+            $this->cachedMediaDatabase->setMongoDbName($this->config['mongoDbName']);
+        }
+
+        return $this->cachedMediaDatabase;
     }
 
     public function getCachedPdfImage($pdfUri, $entityId, $flySpec)
@@ -169,23 +185,9 @@ class CachedMediaService
         }
     }
 
-    public function listenForImageTranscodingJobs()
+    public function isTrancodingDone($imageFile, $entityId, $flySpec)
     {
-        $videoTranscoder = new ImageMediaTranscoder($this);
-        $videoTranscoder->listenForTranscodingJobs();
-    }
-
-    public function listenForVideoTranscodingJobs()
-    {
-        $videoTranscoder = new VideoMediaTranscoder($this);
-        $videoTranscoder->listenForTranscodingJobs();
-    }
-
-    // async images down here:
-
-    public function isTrancodedImageDone($imageFile, $entityId, $flySpec)
-    {
-        $cachedDocument = $this->getCachedMediaDatabase()->getCachedMediaByIdAndSpec($entityId, $flySpec->serialize());
+        $cachedDocument = $this->getTranscodedMedia($entityId, $flySpec);
         if ($cachedDocument->isDone()) {
             return true;
         } else {
@@ -195,7 +197,7 @@ class CachedMediaService
 
     public function getTranscodedMedia($externalId, $flySpec)
     {
-        $cachedDocument = $this->getCachedMediaDatabase()->getCachedMediaByIdAndSpec($externalId, $flySpec->serialize());
+        $cachedDocument = $this->getCachedMediaDatabase()->getCachedMediaByIdAndSpec($externalId, json_encode($flySpec));
         if ($cachedDocument->isDone()) {
             return $cachedDocument;
         } else {
@@ -203,25 +205,63 @@ class CachedMediaService
         }
     }
 
-    public function scheduleMediaTranscoding($mediaFile, $cachedMedia)
-    {
-        $cachedMedia->setStatus('scheduled');
-        $this->getCachedMediaDatabase()->updateCachedMedia($cachedMedia);
-
-        $transcoder = new MediaTranscoder($this);
-        $cachedTempName = $transcoder->scheduleTranscoding($mediaFile, $cachedMedia);
-
-        return $cachedMedia;
-    }
-
     public function createCachedMedia($entityId, $flySpec)
     {
         $cachedMedia = new CachedMedia();
         $cachedMedia->setStatus('initialized');
-        $cachedMedia->setSerializedSpecification($flySpec->serialize());
+        $cachedMedia->setSerializedSpecification(json_encode($flySpec));
         $cachedMedia->setEntityId($entityId);
         $this->getCachedMediaDatabase()->updateCachedMedia($cachedMedia);
 
         return $cachedMedia;
+    }
+
+    public function storeTranscodedFile($entityId, $flySpec, $transcodedFilePath)
+    {
+        $cachedMedia = $this->getTranscodedMedia($entityId, $flySpec);
+        $this->getCacheFileService()->storeFile(
+            $transcodedFilePath,
+            $cachedMedia->getId()
+        );
+    }
+
+    public function advanceToDone($entityId, $flySpec)
+    {
+        $cachedMedia = $this->getTranscodedMedia($entityId, $flySpec);
+        $this->advanceMediaToDone($cachedMedia);
+    }
+
+    public function advanceToScheduled($entityId, $flySpec)
+    {
+        $cachedMedia = $this->getTranscodedMedia($entityId, $flySpec);
+        $this->advanceMediaToScheduled($cachedMedia);
+    }
+
+    public function advanceToCurrentlyTranscoding($entityId, $flySpec)
+    {
+        $cachedMedia = $this->getTranscodedMedia($entityId, $flySpec);
+        $this->advanceMediaToCurrentlyTranscoding($cachedMedia);
+    }
+
+    protected function advanceMediaToScheduled($cachedMedia)
+    {
+        $cachedMedia->setStatus('scheduled');
+        $this->getCachedMediaDatabase()->updateCachedMedia($cachedMedia);
+    }
+
+    protected function advanceMediaToCurrentlyTranscoding($cachedMedia)
+    {
+        if (!$cachedMedia->isScheduled()) {
+            throw new \Exception('we found a cache-item that was not scheduled but in the queue? '.$cachedMedia->getEntityId());
+        } else {
+            $cachedMedia->setStatus('currently_transcoding');
+            $this->getCachedMediaDatabase()->updateCachedMedia($cachedMedia);
+        }
+    }
+
+    protected function advanceMediaToDone($cachedMedia)
+    {
+        $cachedMedia->setStatus('complete');
+        $this->getCachedMediaDatabase()->updateCachedMedia($cachedMedia);
     }
 }

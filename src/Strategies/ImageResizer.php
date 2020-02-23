@@ -17,10 +17,10 @@ class ImageResizer
 
         $this->autoRotateImage($imagick);
 
-        if ($flySpec->isOriginalSize($imagick)) {
-            $imagick->resampleImage(100, 100, \Imagick::FILTER_LANCZOS, 1);
+        if ($flySpec['width'] && $flySpec['height']) {
+            $imagick->resizeImage($flySpec['width'], $flySpec['height'], \Imagick::FILTER_LANCZOS, 1, true);
         } else {
-            $imagick->resizeImage($flySpec->width, $flySpec->height, \Imagick::FILTER_LANCZOS, 1, true);
+            $imagick->resampleImage(100, 100, \Imagick::FILTER_LANCZOS, 1);
         }
 
         $targetFileName = tempnam('/tmp', 'flyfiles');

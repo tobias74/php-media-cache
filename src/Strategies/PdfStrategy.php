@@ -2,7 +2,7 @@
 
 namespace PhpMediaCache\Strategies;
 
-class ImageStrategy
+class PdfStrategy
 {
     public function __construct()
     {
@@ -10,11 +10,11 @@ class ImageStrategy
 
     public function getQueueName()
     {
-        return 'transcoding_images_task_queue_'.$this->getConfig()['rabbitQueueName'];
+        return 'transcoding_pdfs_task_queue_'.$this->getConfig()['rabbitQueueName'];
     }
 
     public function createTranscoder()
     {
-        return new ImageTranscoder();
+        return new PdfTranscoder();
     }
 }

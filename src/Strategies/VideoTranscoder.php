@@ -1,49 +1,29 @@
 <?php
 
-namespace PhpMediaCache;
-
-use PhpAmqpLib\Connection\AMQPConnection;
-use PhpAmqpLib\Message\AMQPMessage;
+namespace PhpMediaCache\Strategies;
 
 class VideoTranscoder
 {
-    public function __construct($cachedMediaService)
-    {
-        $this->cachedMediaService = $cachedMediaService;
-    }
-
-    protected function getCachedMediaService()
-    {
-        return $this->cachedMediaService;
-    }
-
-    protected function getConfig()
-    {
-        return $this->getCachedMediaService()->getConfig();
-    }
-
-    public function getQueueName()
-    {
-        return 'task_queue_'.$this->getConfig()['rabbitQueueName'];
-    }
-
+    protected $intermediateTempFile;
+    protected $transcodedFilePath;
 
     public function transcode($absolutePath, $flySpec)
     {
-        $targetVideoFileWithoutExtension = tempnam('/tmp', 'flyfiles');
-        $targetVideoFile = $targetVideoFileWithoutExtension.'.'.$flySpecHash['format'];
+        $this->intermediateTempFile = tempnam('/tmp', 'flyfiles');
+        $this->transcodedFilePath = $this->intermediateTempFile.'.'.$flySpec['format'];
 
-        $command = dirname(__FILE__).'/../scripts/convert_'.$flySpecHash['format']." \"$originalFile\" $targetVideoFile";
+        $command = dirname(__FILE__).'/../scripts/convert_'.$flySpec['format']." \"$absolutePath\" $this->transcodedFilePath";
 
         error_log('executing '.$command);
         exec($command);
         error_log('and done it');
-        
-        return $targetVideoFile;
+
+        return $this->transcodedFilePath;
     }
-    
-    public function cleanup() {
-        unlink($targetVideoFile);
-        unlink($targetVideoFileWithoutExtension);
+
+    public function cleanup()
+    {
+        unlink($this->transcodedFilePath);
+        unlink($this->intermediateTempFile);
     }
 }

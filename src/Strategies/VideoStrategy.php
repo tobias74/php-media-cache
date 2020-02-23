@@ -1,6 +1,6 @@
 <?php
 
-namespace PhpMediaCache\Stategies;
+namespace PhpMediaCache\Strategies;
 
 class VideoStrategy
 {
@@ -8,7 +8,7 @@ class VideoStrategy
     {
     }
 
-    protected function getQueueName()
+    public function getQueueName()
     {
         return 'transcoding_videos_queue_'.$this->getConfig()['rabbitQueueName'];
     }
@@ -17,6 +17,4 @@ class VideoStrategy
     {
         return new VideoTranscoder();
     }
-    
-    
 }

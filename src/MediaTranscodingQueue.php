@@ -6,16 +6,15 @@ use PhpAmqpLib\Message\AMQPMessage;
 
 class MediaTranscodingQueue
 {
-    public function __construct($cachedMediaService, $queueName, $strategy)
+    public function __construct($cachedMediaService, $strategy)
     {
         $this->cachedMediaService = $cachedMediaService;
-        $this->queueName = $queueName;
         $this->strategy = $strategy;
     }
 
     protected function getQueueName()
     {
-        return $this->queueName;
+        return $this->strategy->getQueueName();
     }
 
     protected function getCachedMediaService()
@@ -45,7 +44,7 @@ class MediaTranscodingQueue
         $connection->close();
     }
 
-    protected function scheduleTranscoding($absolutePath, $entityId, $serializedSpec)
+    public function scheduleTranscoding($absolutePath, $entityId, $serializedSpec)
     {
         $this->publishMessage($this->getQueueName(), array(
           'entityId' => $entityId,
@@ -85,10 +84,10 @@ class MediaTranscodingQueue
     {
         $this->listenOnQueue($this->getQueueName(), function ($msg) {
             echo 'now transcoding... [x] Received ', $msg->body, "\n";
-            $data = json_decode($msg->body);
+            $data = json_decode($msg->body, true);
 
             try {
-                $this->performTranscoding($data->entityId, $data->serializedSpec, $data->absolutePath);
+                $this->performTranscoding($data['entityId'], $data['serializedSpec'], $data['absolutePath']);
             } catch (\ErrorException $e) {
                 error_log($e->getMessage());
                 error_log($e->getTraceAsString());
@@ -100,40 +99,14 @@ class MediaTranscodingQueue
 
     protected function performTranscoding($entityId, $serializedSpec, $absolutePath)
     {
-        $cachedMedia = $this->getCachedMediaService()->getCachedMediaDatabase()->getCachedMediaByIdAndSpec($entityId, $serializedSpec);
-        $this->advanceMediaToCurrentlyTranscoding($cachedMedia);
-        $flySpec = json_decode($cachedMedia->getSerializedSpecification());
+        $flySpec = json_decode($serializedSpec, true);
+
+        $this->getCachedMediaService()->advanceToCurrentlyTranscoding($entityId, $flySpec);
 
         $transcoder = $this->strategy->createTranscoder();
+        $this->getCachedMediaService()->storeTranscodedFile($entityId, $flySpec, $transcoder->transcode($absolutePath, $flySpec));
 
-        $cachedImageTempName = $transcoder->transcode($absolutePath, $flySpec);
-        
-
-        // is this used or read anywhere?
-        /*
-        if ('jpg' === $flySpec['format']) {
-            $cachedMedia->setFileType('image/'.$flySpec['format']);
-        } else {
-            $cachedMedia->setFileType('video/'.$flySpec['format']);
-        }
-        */
-        
-        
-
-        $this->getCachedMediaService()->getCacheFileService()->storeFile($cachedImageTempName, $cachedMedia->getId());
-        $cachedMedia->setStatus('complete');
-        $this->getCachedMediaService()->getCachedMediaDatabase()->updateCachedMedia($cachedMedia);
-
+        $this->getCachedMediaService()->advanceToDone($entityId, $flySpec);
         $transcoder->cleanup();
-    }
-
-    protected function advanceMediaToCurrentlyTranscoding($cachedMedia)
-    {
-        if (!$cachedMedia->isScheduled()) {
-            throw new \Exception('we found a cache-item that was not scheduled but in the queue? '.$cachedMedia->getEntityId());
-        } else {
-            $cachedMedia->setStatus('currently_transcoding');
-            $this->getCachedMediaService()->getCachedMediaDatabase()->updateCachedMedia($cachedMedia);
-        }
     }
 }
