@@ -115,7 +115,7 @@ class CachedMediaService
     public function deleteCachedMedias($entityId)
     {
         try {
-            $cachedMedias = $this->getCachedMediaDatabase()->getCachedMediaByEntityId($entityId);
+            $cachedMedias = $this->getCachedMediaDatabase()->getCachedMediasByEntityId($entityId);
         } catch (\Exception $e) {
             error_log('we tried to deleted cached medias, but did not find any?');
             $cachedMedias = array();

@@ -9,6 +9,11 @@ class CachedMedia
     protected $entityId = '';
     protected $id = false;
 
+    public function isIndividual()
+    {
+        return 'individual' === $this->status;
+    }
+
     public function isInitialized()
     {
         return 'initialized' === $this->status;

@@ -34,7 +34,11 @@ class AbstractStrategy
         }
 
         if ($this->needsScheduling($cachedMedia)) {
-            $this->scheduleTranscoding($originalUri, $cachedMedia);
+            if ($cachedMedia->isIndividual()) {
+                error_log('this is an individual (sync), this should not need scheduling');
+            } else {
+                $this->scheduleTranscoding($originalUri, $cachedMedia);
+            }
         }
 
         return $cachedMedia;

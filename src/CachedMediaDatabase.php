@@ -106,14 +106,15 @@ class CachedMediaDatabase
         return $this->instantiateCachedMedia($document);
     }
 
-    public function getCachedMediaByEntityId($entityId)
+    public function getCachedMediasByEntityId($entityId)
     {
-        $document = $this->getMediaCollection()->findOne(array('entity_id' => $entityId));
-        if (!$document) {
-            throw new \Exception();
+        $medias = array();
+        $cursor = $this->getMediaCollection()->find(array('entity_id' => $entityId));
+        foreach ($cursor as $document) {
+            $medias[] = $this->instantiateCachedMedia($document);
         }
 
-        return $this->instantiateCachedMedia($document);
+        return $medias;
     }
 
     public function deleteCachedMedia($cachedMedia)

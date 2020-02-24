@@ -72,6 +72,7 @@ class MediaTranscodingQueue
 
             $channel->basic_qos(null, 1, null);
             $channel->basic_consume($queueName, '', false, false, false, false, function ($msg) use ($callback) {
+                echo "we are in the consume!! \n";
                 $callback($msg);
                 $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
             });
