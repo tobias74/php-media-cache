@@ -17,42 +17,38 @@ class CachedMediaService
         return $this->config;
     }
 
-    public function scheduleTranscoding($mediaFilePath, $cachedMedia, $type)
+    protected function getStrategyByType($type)
     {
         switch ($type) {
             case 'image':
-                $strategy = new Strategies\ImageStrategy($this->getConfig());
+                $strategy = new Strategies\ImageStrategy($this, $this->getConfig());
                 break;
             case 'video':
-                $strategy = new Strategies\VideoStrategy($this->getConfig());
+                $strategy = new Strategies\VideoStrategy($this, $this->getConfig());
                 break;
             case 'pdf':
-                $strategy = new Strategies\PdfStrategy($this->getConfig());
+                $strategy = new Strategies\PdfStrategy($this, $this->getConfig());
                 break;
             default:
                 throw new \Exception('unknown media type in schedule Trnscoding');
         }
 
-        $transcodingQueue = new MediaTranscodingQueue($this, $strategy);
-        $transcodingQueue->scheduleTranscoding($mediaFilePath, $cachedMedia->getEntityId(), $cachedMedia->getSerializedSpecification());
+        return $strategy;
     }
 
     public function listenForImageTranscodingJobs()
     {
-        $transcodingQueue = new MediaTranscodingQueue($this, new Strategies\ImageStrategy($this->getConfig()));
-        $transcodingQueue->listenForTranscodingJobs();
+        $this->getStrategyByType('image')->listenForTranscodingJobs();
     }
 
     public function listenForVideoTranscodingJobs()
     {
-        $transcodingQueue = new MediaTranscodingQueue($this, new Strategies\VideoStrategy($this->getConfig()));
-        $transcodingQueue->listenForTranscodingJobs();
+        $this->getStrategyByType('video')->listenForTranscodingJobs();
     }
 
     public function listenForPdfTranscodingJobs()
     {
-        $transcodingQueue = new MediaTranscodingQueue($this, new Strategies\PdfStrategy($this->getConfig()));
-        $transcodingQueue->listenForTranscodingJobs();
+        $this->getStrategyByType('pdf')->listenForTranscodingJobs();
     }
 
     public function setCacheFileService($val)
@@ -81,54 +77,34 @@ class CachedMediaService
         return $this->cachedMediaDatabase;
     }
 
-    public function transcodePdfUsingCache($pdfUri, $entityId, $flySpec)
+    public function transcodePdfUsingQueue($pdfUri, $entityId, $flySpec)
     {
-        return $this->transcodeUsingCache(array(
-            'originalUri' => $pdfUri,
-            'type' => 'pdf',
-            'entityId' => $entityId,
-            'flySpec' => $flySpec,
-        ));
+        return $this->getStrategyByType('pdf')->transcodeUsingQueue($pdfUri, $entityId, $flySpec);
     }
 
-    public function transcodeImageUsingCache($imageUri, $entityId, $flySpec)
+    public function transcodeImageUsingQueue($imageUri, $entityId, $flySpec)
     {
-        return $this->transcodeUsingCache(array(
-            'originalUri' => $imageUri,
-            'type' => 'image',
-            'entityId' => $entityId,
-            'flySpec' => $flySpec,
-        ));
+        return $this->getStrategyByType('image')->transcodeUsingQueue($imageUri, $entityId, $flySpec);
     }
 
-    public function transcodeVideoUsingCache($videoFile, $entityId, $flySpec)
+    public function transcodeVideoUsingQueue($videoFile, $entityId, $flySpec)
     {
-        return $this->transcodeUsingCache(array(
-            'originalUri' => $imageUri,
-            'type' => 'video',
-            'entityId' => $entityId,
-            'flySpec' => $flySpec,
-        ));
+        return $this->getStrategyByType('video')->transcodeUsingQueue($videoFile, $entityId, $flySpec);
     }
 
-    protected function transcodeUsingCache($data)
+    public function transcodePdfSync($pdfUri, $entityId, $flySpec)
     {
-        try {
-            $cachedMedia = $this->getCachedMedia($data['entityId'], $data['flySpec']);
-        } catch (\Exception $e) {
-            $cachedMedia = $this->createCachedMedia($data['entityId'], $data['flySpec']);
-        }
-
-        if ($this->needsScheduling($cachedMedia)) {
-            $this->scheduleTranscoding($data['originalUri'], $cachedMedia, $data['type']);
-        }
-
-        return $cachedMedia;
+        return $this->getStrategyByType('pdf')->transcodeSync($pdfUri, $entityId, $flySpec);
     }
 
-    protected function needsScheduling($cachedMedia)
+    public function transcodeImageSync($imageUri, $entityId, $flySpec)
     {
-        return $cachedMedia->hasStalled() || $cachedMedia->isInitialized();
+        return $this->getStrategyByType('image')->transcodeSync($imageUri, $entityId, $flySpec);
+    }
+
+    public function transcodeVideoSync($videoFile, $entityId, $flySpec)
+    {
+        return $this->getStrategyByType('video')->transcodeSync($videoFile, $entityId, $flySpec);
     }
 
     public function getCachedMediaById($mediaId)

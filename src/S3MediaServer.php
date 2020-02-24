@@ -41,7 +41,7 @@ class S3MediaServer
     public function transcodePdf($id, $spec)
     {
         $pdfUri = $this->getS3ServiceForOriginalFiles()->getExternalUri($id);
-        $cachedImage = $this->getMediaCacheService()->transcodePdfUsingCache($pdfUri, $id, $spec);
+        $cachedImage = $this->getMediaCacheService()->transcodePdfUsingQueue($pdfUri, $id, $spec);
 
         return $this->mapCachedMedia($cachedImage);
     }
@@ -49,7 +49,7 @@ class S3MediaServer
     public function transcodeImage($id, $spec)
     {
         $imageUri = $this->getS3ServiceForOriginalFiles()->getExternalUri($id);
-        $cachedImage = $this->getMediaCacheService()->transcodeImageUsingCache($imageUri, $id, $spec);
+        $cachedImage = $this->getMediaCacheService()->transcodeImageUsingQueue($imageUri, $id, $spec);
 
         return $this->mapCachedMedia($cachedImage);
     }
@@ -57,7 +57,31 @@ class S3MediaServer
     public function transcodeVideo($id, $flySpec)
     {
         $videoUrl = $this->getS3ServiceForOriginalFiles()->getExternalUri($id);
-        $cachedVideo = $this->getMediaCacheService()->transcodeVideoUsingCache($videoUrl, $id, $flySpec);
+        $cachedVideo = $this->getMediaCacheService()->transcodeVideoUsingQueue($videoUrl, $id, $flySpec);
+
+        return $this->mapCachedMedia($cachedVideo);
+    }
+
+    public function transcodePdfSync($id, $spec)
+    {
+        $pdfUri = $this->getS3ServiceForOriginalFiles()->getExternalUri($id);
+        $cachedImage = $this->getMediaCacheService()->transcodePdfSync($pdfUri, $id, $spec);
+
+        return $this->mapCachedMedia($cachedImage);
+    }
+
+    public function transcodeImageSync($id, $spec)
+    {
+        $imageUri = $this->getS3ServiceForOriginalFiles()->getExternalUri($id);
+        $cachedImage = $this->getMediaCacheService()->transcodeImageSync($imageUri, $id, $spec);
+
+        return $this->mapCachedMedia($cachedImage);
+    }
+
+    public function transcodeVideoSync($id, $flySpec)
+    {
+        $videoUrl = $this->getS3ServiceForOriginalFiles()->getExternalUri($id);
+        $cachedVideo = $this->getMediaCacheService()->transcodeVideoSync($videoUrl, $id, $flySpec);
 
         return $this->mapCachedMedia($cachedVideo);
     }

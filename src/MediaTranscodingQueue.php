@@ -95,25 +95,7 @@ class MediaTranscodingQueue
         $this->listenOnQueue($this->getQueueName(), function ($msg) {
             echo 'now transcoding... [x] Received ', $msg->body, "\n";
             $data = json_decode($msg->body, true);
-            $this->performTranscoding($data['entityId'], $data['serializedSpec'], $data['absolutePath']);
+            $this->strategy->performTranscoding($data['entityId'], $data['serializedSpec'], $data['absolutePath']);
         });
-    }
-
-    protected function performTranscoding($entityId, $serializedSpec, $absolutePath)
-    {
-        echo 'Performing Transcoding';
-        error_log('Again in Errorlog- Trying transcoding');
-        try {
-            $flySpec = json_decode($serializedSpec, true);
-            $this->getCachedMediaService()->advanceToCurrentlyTranscoding($entityId, $flySpec);
-
-            $transcoder = $this->strategy->createTranscoder();
-            $this->getCachedMediaService()->storeTranscodedFile($entityId, $flySpec, $transcoder->transcode($absolutePath, $flySpec));
-            $this->getCachedMediaService()->advanceToDone($entityId, $flySpec);
-            $transcoder->cleanup();
-        } catch (\Exception $e) {
-            echo 'error position code: 23874698769876';
-            echo $e->getMessage();
-        }
     }
 }
