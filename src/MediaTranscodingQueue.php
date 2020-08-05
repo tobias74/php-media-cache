@@ -63,31 +63,34 @@ class MediaTranscodingQueue
 
     protected function listenOnQueue($queueName, $callback)
     {
-        try {
-            $connection = $this->getConnection();
-            $channel = $connection->channel();
-            $channel->queue_declare($queueName, false, true, false, false);
-
-            echo ' [*] Waiting for messages on '.$queueName.'. To exit press CTRL+C', "\n";
-
-            $channel->basic_qos(null, 1, null);
-            $channel->basic_consume($queueName, '', false, false, false, false, function ($msg) use ($callback) {
-                echo "we are in the consume!! \n";
-                $callback($msg);
-                $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
-            });
-
-            while (count($channel->callbacks)) {
-                $channel->wait();
+        while (true) {
+            try {
+                $connection = $this->getConnection();
+                $channel = $connection->channel();
+                $channel->queue_declare($queueName, false, true, false, false);
+    
+                echo ' [*] Waiting for messages on '.$queueName.'. To exit press CTRL+C', "\n";
+    
+                $channel->basic_qos(null, 1, null);
+                $channel->basic_consume($queueName, '', false, false, false, false, function ($msg) use ($callback) {
+                    echo "we are in the consume!! \n";
+                    $callback($msg);
+                    $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
+                });
+    
+                while (count($channel->callbacks)) {
+                    $channel->wait();
+                }
+                
+                echo "we did leave the while loop of the channel...";
+                $channel->close();
+                $connection->close();
+                echo "we closed all channels";
+            } catch (\ErrorException $e) {
+                echo "ERROR happend: ";
+                echo $e->getMessage();
+                echo $e->getTraceAsString();
             }
-
-            $channel->close();
-            $connection->close();
-        } catch (\ErrorException $e) {
-            echo $e->getMessage();
-            echo $e->getTraceAsString();
-            echo 'Exiting from listening on Queue....................................';
-            die(255);
         }
     }
 
