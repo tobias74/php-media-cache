@@ -75,11 +75,15 @@ class MediaTranscodingQueue
                 $channel->basic_consume($queueName, '', false, false, false, false, function ($msg) use ($callback) {
                     echo "we are in the consume!! \n";
                     $callback($msg);
+                    echo "we cam back from the callback";
                     $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
+                    echo "we delivered the info";
                 });
     
                 while (count($channel->callbacks)) {
+                    echo "in while loop before wait";
                     $channel->wait();
+                    echo "in while loop after wait";
                 }
                 
                 echo "we did leave the while loop of the channel...";

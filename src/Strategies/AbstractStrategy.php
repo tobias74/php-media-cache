@@ -80,7 +80,7 @@ class AbstractStrategy
     public function performTranscoding($entityId, $serializedSpec, $absolutePath)
     {
         echo 'Performing Transcoding';
-        error_log('Again in Errorlog- Trying transcoding');
+        echo 'Again in Errorlog- Trying transcoding';
         try {
             $flySpec = json_decode($serializedSpec, true);
             $this->getCachedMediaService()->advanceToCurrentlyTranscoding($entityId, $flySpec);
