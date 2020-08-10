@@ -10,7 +10,7 @@ then
     
 
     echo "Generating thumbnail"
-    avconv -i "$1"  -filter:v yadif -ss 0.5 -t 1 -f image2 -frames:v 1 "$targetDirectory/$targetBasename"
+    ffmpeg -i "$1"  -filter:v yadif -ss 0.5 -t 1 -f image2 -frames:v 1 "$targetDirectory/$targetBasename"
     echo "Finished thumbnail"
 
 

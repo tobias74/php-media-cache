@@ -58,7 +58,24 @@ class MediaTranscodingQueue
 
     protected function getConnection()
     {
-        return new \PhpAmqpLib\Connection\AMQPConnection($this->getConfig()['rabbitMqHost'], 5672, 'guest', 'guest');
+        return new \PhpAmqpLib\Connection\AMQPConnection(
+            $this->getConfig()['rabbitMqHost'],
+            5672,
+            'guest',
+            'guest',
+            '/',
+            false,
+            'AMQPLAIN',
+            null,
+            'en_US',
+            3.0,
+            3.0,
+            null,
+            true,  //keepalive
+            0, // heartbeat
+            0.0,
+            null
+        );
     }
 
     protected function listenOnQueue($queueName, $callback)
@@ -69,29 +86,29 @@ class MediaTranscodingQueue
                 $channel = $connection->channel();
                 $channel->queue_declare($queueName, false, true, false, false);
     
-                echo ' [*] Waiting for messages on '.$queueName.'. To exit press CTRL+C', "\n";
+                error_log(' [*] Waiting for messages on '.$queueName.'. To exit press CTRL+C'. "\n");
     
                 $channel->basic_qos(null, 1, null);
-                $channel->basic_consume($queueName, '', false, false, false, false, function ($msg) use ($callback) {
-                    echo "we are in the consume!! \n";
-                    $callback($msg);
-                    echo "we cam back from the callback";
+                $channel->basic_consume($queueName, '', false, false, false, false, function ($msg) use ($callback, $connection) {
+                    error_log("we are in the consume!! \n");
+                    $callback($msg, $connection);
+                    error_log("we cam back from the callback \n");
                     $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
-                    echo "we delivered the info";
+                    error_log("we delivered the info");
                 });
     
-                while (count($channel->callbacks)) {
-                    echo "in while loop before wait";
+                while ($channel->is_consuming()) {
+                    error_log("in while loop before wait");
                     $channel->wait();
-                    echo "in while loop after wait";
+                    error_log("in while loop after wait");
                 }
                 
-                echo "we did leave the while loop of the channel...";
+                error_log("we did leave the while loop of the channel...");
                 $channel->close();
                 $connection->close();
-                echo "we closed all channels";
-            } catch (\ErrorException $e) {
-                echo "ERROR happend: ";
+                error_log("we closed all channels");
+            } catch (\Exception $e) {
+                echo "Exception happend: ";
                 echo $e->getMessage();
                 echo $e->getTraceAsString();
             }
@@ -100,10 +117,12 @@ class MediaTranscodingQueue
 
     public function listenForTranscodingJobs()
     {
-        $this->listenOnQueue($this->getQueueName(), function ($msg) {
-            echo 'now transcoding... [x] Received ', $msg->body, "\n";
+        $this->listenOnQueue($this->getQueueName(), function ($msg, $connection) {
+            error_log('now transcoding... [x] Received '.$msg->body. "\n");
             $data = json_decode($msg->body, true);
             $this->strategy->performTranscoding($data['entityId'], $data['serializedSpec'], $data['absolutePath']);
+            error_log('in the listen callbacj, here we should be finished?');
         });
     }
+    
 }
