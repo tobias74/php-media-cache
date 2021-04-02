@@ -58,24 +58,16 @@ class MediaTranscodingQueue
 
     protected function getConnection()
     {
-        return new \PhpAmqpLib\Connection\AMQPConnection(
+        print_r($this->getConfig());
+        $connection = new AMQPStreamConnection(
             $this->getConfig()['rabbitMqHost'],
             $this->getConfig()['rabbitMqPort'],
             $this->getConfig()['rabbitMqUser'],
             $this->getConfig()['rabbitMqPassword'],
-            '/',
-            false,
-            'AMQPLAIN',
-            null,
-            'en_US',
-            3.0,
-            3.0,
-            null,
-            true,  //keepalive
-            0, // heartbeat
-            0.0,
-            null
+            '/'
         );
+
+        return $connection;
     }
 
     protected function listenOnQueue($queueName, $callback)
