@@ -144,6 +144,9 @@ class S3MediaServer
            'mongoDbHost' => $config['mongoDbHost'],
            'mongoDbName' => $config['mongoDbName'],
            'rabbitMqHost' => $config['rabbitMqHost'],
+           'rabbitMqPort' => $config['rabbitMqPort'],
+           'rabbitMqUser' => $config['rabbitMqUser'],
+           'rabbitMqPassword' => $config['rabbitMqPassword'],
            'rabbitQueueName' => $config['rabbitQueueName'],
          ))
          ->addManagedDependency('CacheFileService', 'S3ServiceForTranscodedFiles');

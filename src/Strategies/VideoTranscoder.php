@@ -14,6 +14,7 @@ class VideoTranscoder
 
         $command = dirname(__FILE__).'/../scripts/convert_'.$flySpec['format']." \"$absolutePath\" $this->transcodedFilePath";
 
+        echo 'executing somehting in the video-thing....';
         error_log('executing '.$command);
         exec($command);
         error_log('and done it');
