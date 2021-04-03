@@ -31,7 +31,7 @@ class CachedMediaDatabase
     protected function getConnection()
     {
         if (!$this->connection) {
-            $this->connection = new \MongoDB\Client('mongodb://'.$this->mongoDbHost.':27017');
+            $this->connection = new \MongoDB\Client($this->mongoDbHost);
         }
 
         return $this->connection;

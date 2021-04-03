@@ -59,12 +59,24 @@ class MediaTranscodingQueue
     protected function getConnection()
     {
         print_r($this->getConfig());
-        $connection = new AMQPStreamConnection(
+
+        $ssl = [
+            'verify_peer' => false,
+            'verify_peer_name' => false,
+        ];
+
+        $connection = new \PhpAmqpLib\Connection\AMQPSSLConnection(
             $this->getConfig()['rabbitMqHost'],
             $this->getConfig()['rabbitMqPort'],
             $this->getConfig()['rabbitMqUser'],
             $this->getConfig()['rabbitMqPassword'],
-            '/'
+            '/',
+            $ssl,
+            [
+                'read_write_timeout' => 30,    // needs to be at least 2x heartbeat
+                'keepalive' => false, // doesn't work with ssl connections
+                'heartbeat' => 15,
+            ]
         );
 
         return $connection;
