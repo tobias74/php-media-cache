@@ -40,7 +40,7 @@ class S3MediaServer
 
     public function transcodePdf($id, $spec)
     {
-        $pdfUri = $this->getS3ServiceForOriginalFiles()->getExternalUri($id);
+        $pdfUri = $this->getS3ServiceForOriginalFiles()->getExternalUri($id, '+7 days');
         $cachedImage = $this->getMediaCacheService()->transcodePdfUsingQueue($pdfUri, $id, $spec);
 
         return $this->mapCachedMedia($cachedImage);
@@ -48,7 +48,7 @@ class S3MediaServer
 
     public function transcodeImage($id, $spec)
     {
-        $imageUri = $this->getS3ServiceForOriginalFiles()->getExternalUri($id);
+        $imageUri = $this->getS3ServiceForOriginalFiles()->getExternalUri($id, '+7 days');
         $cachedImage = $this->getMediaCacheService()->transcodeImageUsingQueue($imageUri, $id, $spec);
 
         return $this->mapCachedMedia($cachedImage);
@@ -56,7 +56,7 @@ class S3MediaServer
 
     public function transcodeVideo($id, $flySpec)
     {
-        $videoUrl = $this->getS3ServiceForOriginalFiles()->getExternalUri($id);
+        $videoUrl = $this->getS3ServiceForOriginalFiles()->getExternalUri($id, '+7 days');
         $cachedVideo = $this->getMediaCacheService()->transcodeVideoUsingQueue($videoUrl, $id, $flySpec);
 
         return $this->mapCachedMedia($cachedVideo);

@@ -33,8 +33,6 @@ class MediaTranscodingQueue
         $channel = $connection->channel();
         $channel->queue_declare($channelName, false, true, false, false);
 
-        error_log('Publishing Message to channel '.$channelName);
-
         // make message persistent
         $msg = new AMQPMessage(json_encode($messageData), array('delivery_mode' => 2));
         $channel->basic_publish($msg, '', $channelName);
@@ -58,8 +56,6 @@ class MediaTranscodingQueue
 
     protected function getConnection()
     {
-        print_r($this->getConfig());
-
         $ssl = [
             'verify_peer' => false,
             'verify_peer_name' => false,
@@ -71,12 +67,7 @@ class MediaTranscodingQueue
             $this->getConfig()['rabbitMqUser'],
             $this->getConfig()['rabbitMqPassword'],
             '/',
-            $ssl,
-            [
-                'read_write_timeout' => 30,    // needs to be at least 2x heartbeat
-                'keepalive' => false, // doesn't work with ssl connections
-                'heartbeat' => 15,
-            ]
+            $ssl
         );
 
         return $connection;
