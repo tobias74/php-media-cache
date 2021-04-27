@@ -28,13 +28,15 @@ class S3MediaServer
     {
         if ($cachedMedia->isScheduled()) {
             return array(
-             'status' => 'scheduled',
+                'entityId' => $cachedMedia->getEntityId(),
+                'status' => 'scheduled',
             );
         } else {
             return array(
-            'status' => 'done',
-            'fileNameInBucket' => $cachedMedia->getId(),
-          );
+                'entityId' => $cachedMedia->getEntityId(),
+                'status' => 'done',
+                'fileNameInBucket' => $cachedMedia->getId(),
+              );
         }
     }
 
@@ -91,6 +93,17 @@ class S3MediaServer
         $cachedImage = $this->getMediaCacheService()->getCachedMedia($id, $spec);
 
         return $this->mapCachedMedia($cachedImage);
+    }
+
+    public function getCachedMediasData($ids, $spec)
+    {
+        $cachedMedias = $this->getMediaCacheService()->getCachedMedias($ids, $spec);
+        $results = [];
+        foreach ($cachedMedias as $cachedMedia) {
+            $results[$cachedMedia->getEntityId()] = $this->mapCachedMedia($cachedMedia);
+        }
+
+        return $results;
     }
 
     public function deleteMedia($id)

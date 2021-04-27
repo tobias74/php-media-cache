@@ -106,6 +106,18 @@ class CachedMediaDatabase
         return $this->instantiateCachedMedia($document);
     }
 
+    public function getCachedMediasByIdsAndSpec($entityIds, $serializedSpec)
+    {
+        $documents = $this->getMediaCollection()->find(array('entity_id' => array('$in' => $entityIds), 'serialized_specification' => $serializedSpec));
+
+        $results = [];
+        foreach ($documents as $document) {
+            $results[] = $this->instantiateCachedMedia($document);
+        }
+
+        return $results;
+    }
+
     public function getCachedMediasByEntityId($entityId)
     {
         $medias = array();

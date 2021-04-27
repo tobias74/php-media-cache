@@ -142,6 +142,11 @@ class CachedMediaService
         return $this->getCachedMediaDatabase()->getCachedMediaByIdAndSpec($externalId, json_encode($flySpec));
     }
 
+    public function getCachedMedias($externalIds, $flySpec)
+    {
+        return $this->getCachedMediaDatabase()->getCachedMediasByIdsAndSpec($externalIds, json_encode($flySpec));
+    }
+
     public function createCachedMedia($entityId, $flySpec)
     {
         $cachedMedia = new CachedMedia();
