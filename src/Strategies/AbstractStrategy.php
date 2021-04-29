@@ -79,18 +79,15 @@ class AbstractStrategy
 
     public function performTranscoding($entityId, $serializedSpec, $absolutePath)
     {
-        echo 'Performing Transcoding';
-        echo 'Again in Errorlog- Trying transcoding';
         try {
             $flySpec = json_decode($serializedSpec, true);
             $this->getCachedMediaService()->advanceToCurrentlyTranscoding($entityId, $flySpec);
-
             $transcoder = $this->createTranscoder();
             $this->getCachedMediaService()->storeTranscodedFile($entityId, $flySpec, $transcoder->transcode($absolutePath, $flySpec));
             $this->getCachedMediaService()->advanceToDone($entityId, $flySpec);
             $transcoder->cleanup();
         } catch (\Exception $e) {
-            echo 'error position code: 23874698769876';
+            echo 'error performing transcode: ';
             echo $e->getMessage();
         }
     }

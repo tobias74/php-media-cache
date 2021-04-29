@@ -85,17 +85,14 @@ class MediaTranscodingQueue
 
                 $channel->basic_qos(null, 1, null);
                 $channel->basic_consume($queueName, '', false, false, false, false, function ($msg) use ($callback, $connection) {
-                    error_log("we are in the consume!! \n");
                     $callback($msg, $connection);
-                    error_log("we cam back from the callback \n");
                     $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
-                    error_log('we delivered the info');
                 });
 
                 while ($channel->is_consuming()) {
-                    error_log('in while loop before wait');
+                    echo 'in while loop before wait';
                     $channel->wait();
-                    error_log('in while loop after wait');
+                    echo 'in while loop after wait';
                 }
 
                 error_log('we did leave the while loop of the channel...');
@@ -116,7 +113,6 @@ class MediaTranscodingQueue
             error_log('now transcoding... [x] Received '.$msg->body."\n");
             $data = json_decode($msg->body, true);
             $this->strategy->performTranscoding($data['entityId'], $data['serializedSpec'], $data['absolutePath']);
-            error_log('in the listen callbacj, here we should be finished?');
         });
     }
 }
