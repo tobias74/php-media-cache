@@ -56,21 +56,28 @@ class MediaTranscodingQueue
 
     protected function getConnection()
     {
-        $ssl = [
-            'verify_peer' => false,
-            'verify_peer_name' => false,
-        ];
-
-        $connection = new \PhpAmqpLib\Connection\AMQPSSLConnection(
-            $this->getConfig()['rabbitMqHost'],
-            $this->getConfig()['rabbitMqPort'],
-            $this->getConfig()['rabbitMqUser'],
-            $this->getConfig()['rabbitMqPassword'],
-            '/',
-            $ssl
-        );
-
-        return $connection;
+        error_log('---------------------------------------------------------------------------this is our port '. $this->getConfig()['rabbitMqPort']);
+        if ($this->getConfig()['rabbitMqPort'] === 5671) {
+            error_log('using rabbit mq over ssl');
+            $ssl = [
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+            ];
+    
+            $connection = new \PhpAmqpLib\Connection\AMQPSSLConnection(
+                $this->getConfig()['rabbitMqHost'],
+                $this->getConfig()['rabbitMqPort'],
+                $this->getConfig()['rabbitMqUser'],
+                $this->getConfig()['rabbitMqPassword'],
+                '/',
+                $ssl
+            );
+    
+            return $connection;
+        } else {
+            error_log('using rabbit my NON ssl');
+            return new \PhpAmqpLib\Connection\AMQPStreamConnection($this->getConfig()['rabbitMqHost'], $this->getConfig()['rabbitMqPort'], $this->getConfig()['rabbitMqUser'], $this->getConfig()['rabbitMqPassword']);            
+        }
     }
 
     protected function listenOnQueue($queueName, $callback)
